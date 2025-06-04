@@ -1,0 +1,73 @@
+Configuration Loaded:
+PORT: 3000
+MONGO_URI: mongodb://127.0.0.1:27017/projectManagement
+JWT_SECRET: aBcdEfGhIjKlMnOpQrStUvWxYz1234567890=
+JWT_EXPIRATION: 86400
+NODE_ENV: development
+PORT: undefined
+NODE_ENV: undefined
+MongoDB URI: Not Set
+JWT Secret: Not Set
+Connecting to MongoDB Atlas...
+Routes mounted:
+- Auth routes mounted at /api/auth
+- Staff routes mounted at /api/staff
+- Distributor routes mounted at /api/distributors
+- Damage claim routes mounted at /api/damage-claims
+- Mobile app routes mounted at /api/mobile
+- Swagger docs available at /api-docs
+- Sales inquiry routes mounted at /api/sales-inquiries
+2025-05-21 14:42:21:4221 [32minfo[39m: [32mServer running in development mode on port 3000[39m
+2025-05-21 14:42:21:4221 [32minfo[39m: [32mMongoDB Connected: ac-jrg4u2a-shard-00-01.mqex9dg.mongodb.net[39m
+2025-05-21 14:42:40:4240 [32minfo[39m: [32mREQUEST: POST /api/sales-inquiries from 127.0.0.1[39m
+2025-05-21 14:42:40:4240 [32minfo[39m: [32mREQUEST BODY: {"distributorId":"68271f50e82cd9672f9a328f","distributorName":"NAMAN JHA","products":[{"brand":"Surya Chandra","variant":"Pouch","size":"1 LTR","quantity":10},{"brand":"KG Brand","variant":"KG Tins","size":"KG Yellow","quantity":5}],"visitPurpose":"Distributor Search","area":"Test Area"}[39m
+2025-05-21 14:42:41:4241 [32minfo[39m: [32mRESPONSE: POST /api/sales-inquiries - 201 - 496ms[39m
+2025-05-21 14:42:49:4249 [32minfo[39m: [32mREQUEST: PATCH /api/sales-inquiries/682d9908525b71f989be15c4 from 127.0.0.1[39m
+2025-05-21 14:42:49:4249 [32minfo[39m: [32mREQUEST BODY: {"status":"Processing","notes":"Testing status update"}[39m
+2025-05-21 14:42:50:4250 [32minfo[39m: [32mRESPONSE: PATCH /api/sales-inquiries/682d9908525b71f989be15c4 - 200 - 187ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 70ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 64ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 71ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 82ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 132ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 82ms[39m
+2025-05-21 14:42:58:4258 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 115ms[39m
+2025-05-21 14:43:19:4319 [32minfo[39m: [32mREQUEST: DELETE /api/sales-inquiries/682d969a0f75ffa77355cc25 from 127.0.0.1[39m
+2025-05-21 14:43:19:4319 [32minfo[39m: [32mRESPONSE: DELETE /api/sales-inquiries/682d969a0f75ffa77355cc25 - 200 - 143ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 70ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 72ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 72ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 73ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 117ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 72ms[39m
+2025-05-21 14:43:24:4324 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 103ms[39m
+2025-05-21 14:43:31:4331 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries from 127.0.0.1[39m
+2025-05-21 14:43:32:4332 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries - 200 - 109ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 64ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 64ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/auth/me from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/auth/me - 200 - 65ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 70ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/distributors from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 121ms[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mREQUEST: GET /api/sales-inquiries? from 127.0.0.1[39m
+2025-05-21 14:43:52:4352 [32minfo[39m: [32mRESPONSE: GET /api/distributors - 200 - 75ms[39m
+2025-05-21 14:43:53:4353 [32minfo[39m: [32mRESPONSE: GET /api/sales-inquiries? - 200 - 102ms[39m

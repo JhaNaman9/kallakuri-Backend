@@ -1,0 +1,96 @@
+{
+  "retailShop": "Sample Shop",
+  "distributor": "ABC Distributors",
+  "areaName": "Downtown",
+  "tripCompanion": {
+    "category": "Marketing Staff",
+    "name": "John Doe"
+  },
+  "modeOfTransport": "Car",
+  "selfieImage": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+  "shopTypes": ["Retailer", "Whole Seller"],
+  "shops": [
+    {
+      "name": "Supermarket A",
+      "type": "Retailer"
+    },
+    {
+      "name": "Wholesale B",
+      "type": "Whole Seller"
+    }
+  ],
+  "brandSupplyEstimates": [
+    {
+      "_id": "",
+      "name": "KG Brand",
+      "variants": [
+        {
+          "_id": "",
+          "name": "pouch",
+          "sizes": [
+            {
+              "_id": "",
+              "name": "100g",
+              "openingStock": 50,
+              "proposedMarketRate": 45.5
+            },
+            {
+              "_id": "",
+              "name": "200g",
+              "openingStock": 30,
+              "proposedMarketRate": 85.0
+            },
+            {
+              "_id": "",
+              "name": "500g",
+              "openingStock": 20,
+              "proposedMarketRate": 200.0
+            }
+          ]
+        },
+        {
+          "_id": "",
+          "name": "tin",
+          "sizes": [
+            {
+              "_id": "",
+              "name": "250g",
+              "openingStock": 25,
+              "proposedMarketRate": 125.5
+            },
+            {
+              "_id": "",
+              "name": "500g",
+              "openingStock": 15,
+              "proposedMarketRate": 230.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "",
+      "name": "XYZ Brand",
+      "variants": [
+        {
+          "_id": "",
+          "name": "bottle",
+          "sizes": [
+            {
+              "_id": "",
+              "name": "500ml",
+              "openingStock": 40,
+              "proposedMarketRate": 75.0
+            },
+            {
+              "_id": "",
+              "name": "1L",
+              "openingStock": 25,
+              "proposedMarketRate": 140.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} 

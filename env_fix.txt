@@ -1,0 +1,5 @@
+MONGO_URI=mongodb://127.0.0.1:27017/projectManagement
+PORT=3000
+JWT_SECRET=aBcdEfGhIjKlMnOpQrStUvWxYz1234567890=
+NODE_ENV=development
+JWT_EXPIRATION=86400
