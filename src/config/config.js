@@ -2,7 +2,7 @@ require('dotenv').config();
 const dbConfig = require('./dbConfig');
 
 module.exports = {
-  port: process.env.PORT || 3000,
+  port: process.env.PORT || 5050,
   // Prioritize MongoDB Atlas connection string
   mongoURI: dbConfig.getMongoURI(),
   jwtSecret: process.env.JWT_SECRET || 'sdkfjhs234kj23h4k2jh34kjh2fdsjkfds87238472384sdjfh',

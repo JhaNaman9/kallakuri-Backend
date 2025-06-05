@@ -12,15 +12,13 @@ const { swaggerDocs } = require('./utils/swagger');
 
 // Debugging: Log configuration values to verify they are loaded from .env
 console.log('Configuration Loaded:');
+// Port and other config values are managed globally via config.js and .env
 console.log('PORT:', config.port);
 console.log('MONGO_URI:', config.mongoURI);
 console.log('JWT_SECRET:', config.jwtSecret);
 console.log('JWT_EXPIRATION:', config.jwtExpiration);
 console.log('NODE_ENV:', config.nodeEnv);
-console.log(`PORT: ${config.PORT}`);
-console.log(`NODE_ENV: ${config.NODE_ENV}`);
-console.log(`MongoDB URI: ${config.MONGODB_URI ? 'Set' : 'Not Set'}`);
-console.log(`JWT Secret: ${config.JWT_SECRET ? 'Set' : 'Not Set'}`);
+// Remove duplicate/confusing config.PORT and config.NODE_ENV logs
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -43,6 +41,9 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Create Express app
 const app = express();
+
+// Serve uploads directory as static to allow image access via URL
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads'))); // <-- Added for image access
 
 // Trust proxy for X-Forwarded-For headers (needed for rate limiting behind proxies)
 app.set('trust proxy', 1);
@@ -228,9 +229,9 @@ app.use('/api/*', (req, res) => {
 app.use(errorHandler);
 
 // Start server
-const PORT = config.port;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running in ${config.nodeEnv} mode on port ${PORT}`);
+// Always use config.port for the server port
+const server = app.listen(config.port, '0.0.0.0', () => {
+  logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
 });
 
 // Handle unhandled promise rejections
