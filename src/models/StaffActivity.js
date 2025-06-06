@@ -15,7 +15,7 @@ const StaffActivitySchema = new mongoose.Schema(
     activityType: {
       type: String,
       required: [true, 'Please provide an activity type'],
-      enum: ['Task', 'Order', 'Damage Claim', 'Supply Estimate', 'Inquiry', 'Dispatch', 'Other', 'Damage Claim Replacement'],
+      enum: ['Task', 'Task Creation', 'Order', 'Damage Claim', 'Supply Estimate', 'Inquiry', 'Dispatch', 'Other', 'Damage Claim Replacement'],
       trim: true
     },
     details: {

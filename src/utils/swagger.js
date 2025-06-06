@@ -10,6 +10,10 @@ const options = {
       version: '1.0.0',
       description: 'API documentation for Company Management System',
     },
+    paths: {
+      // All paths are now documented via JSDoc in route files for Swagger UI
+
+    },
     servers: [
       {
         url: '{protocol}://{hostname}:{port}',

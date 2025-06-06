@@ -36,7 +36,6 @@ exports.createOrUpdateActivity = async (req, res, next) => {
       status
     } = req.body;
 
-    // First verify distributor exists
     const distributor = await Distributor.findById(distributorId);
     if (!distributor) {
       return res.status(404).json({
@@ -45,18 +44,16 @@ exports.createOrUpdateActivity = async (req, res, next) => {
       });
     }
 
-    // Then verify shop exists and belongs to this distributor
-    const shop = await Shop.findOne({ 
+    const shop = await Shop.findOne({
       _id: shopId,
       distributorId: distributorId,
       isActive: true
     });
 
     if (!shop) {
-      // If not found in Shop collection, check legacy shops
-      const isLegacyShop = distributor.retailShops.some(s => 
+      const isLegacyShop = distributor.retailShops.some(s =>
         s._id.toString() === shopId
-      ) || distributor.wholesaleShops.some(s => 
+      ) || distributor.wholesaleShops.some(s =>
         s._id.toString() === shopId
       );
 
@@ -68,7 +65,6 @@ exports.createOrUpdateActivity = async (req, res, next) => {
       }
     }
 
-    // Check for existing activity today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -81,7 +77,6 @@ exports.createOrUpdateActivity = async (req, res, next) => {
     });
 
     if (activity) {
-      // Update existing activity
       if (isPunchedIn !== undefined) {
         activity.isPunchedIn = isPunchedIn;
         if (!isPunchedIn) {
@@ -90,7 +85,6 @@ exports.createOrUpdateActivity = async (req, res, next) => {
         }
       }
 
-      // Only update fields if they are provided
       if (salesOrders && Array.isArray(salesOrders)) {
         activity.salesOrders = salesOrders;
       }
@@ -102,16 +96,7 @@ exports.createOrUpdateActivity = async (req, res, next) => {
       if (voiceNote) activity.voiceNote = voiceNote;
       if (mobileNumber) activity.mobileNumber = mobileNumber;
       if (status) activity.status = status;
-
-      console.log('Updating existing activity:', {
-        activityId: activity._id,
-        shopId: activity.shopId,
-        staffId: activity.marketingStaffId,
-        status: activity.status,
-        salesOrders: activity.salesOrders?.length || 0
-      });
     } else {
-      // Create new activity
       activity = new RetailerShopActivity({
         marketingStaffId: req.user.id,
         distributorId,
@@ -126,16 +111,8 @@ exports.createOrUpdateActivity = async (req, res, next) => {
         mobileNumber,
         status: status || 'In Progress'
       });
-
-      console.log('Creating new activity:', {
-        shopId: activity.shopId,
-        staffId: activity.marketingStaffId,
-        status: activity.status,
-        salesOrders: activity.salesOrders?.length || 0
-      });
     }
 
-    // Save voice note if provided as base64
     if (req.body.voiceNoteBase64) {
       const voiceNoteDir = path.join(__dirname, '../../uploads/voice-notes');
       if (!fs.existsSync(voiceNoteDir)) {
@@ -144,21 +121,19 @@ exports.createOrUpdateActivity = async (req, res, next) => {
 
       const voiceNoteFile = `voice_${activity._id}_${Date.now()}.wav`;
       const voiceNotePath = path.join(voiceNoteDir, voiceNoteFile);
-      
+
       fs.writeFileSync(voiceNotePath, Buffer.from(req.body.voiceNoteBase64, 'base64'));
       activity.voiceNote = `/uploads/voice-notes/${voiceNoteFile}`;
     }
 
     await activity.save();
 
-    // Populate references for response
     const populatedActivity = await RetailerShopActivity.findById(activity._id)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
-      .populate('marketingStaffId', 'name email')
-      .lean();
+      .populate('marketingStaffId', 'name email');
 
-    res.status(201).json({
+    res.status(activity.isNew ? 201 : 200).json({
       success: true,
       data: populatedActivity
     });
@@ -177,27 +152,25 @@ exports.createOrUpdateActivity = async (req, res, next) => {
 exports.getMyActivities = async (req, res, next) => {
   try {
     const { date, distributorId, shopId } = req.query;
-    
-    // Build query
+
     const query = { marketingStaffId: req.user.id };
-    
+
     if (date) {
       const queryDate = new Date(date);
       const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
       const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
-      
+
       query.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
-    
+
     if (distributorId) {
       query.distributorId = distributorId;
     }
-    
+
     if (shopId) {
       query.shopId = shopId;
     }
-    
-    // Get activities with populated references
+
     const activities = await RetailerShopActivity.find(query)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
@@ -228,14 +201,13 @@ exports.getActivity = async (req, res, next) => {
       .populate('alternateProviders.mlmId', 'name');
 
     if (!activity) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         error: 'Activity not found'
       });
     }
 
-    // For Marketing Staff, only allow viewing own activities
-    if (req.user.role === 'Marketing Staff' && 
+    if (req.user.role === 'Marketing Staff' &&
         activity.marketingStaffId._id.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -261,35 +233,33 @@ exports.getActivity = async (req, res, next) => {
 exports.getAllActivities = async (req, res, next) => {
   try {
     const { staffId, distributorId, shopId, date, status } = req.query;
-    
-    // Build query
+
     const query = {};
-    
+
     if (staffId) {
       query.marketingStaffId = staffId;
     }
-    
+
     if (distributorId) {
       query.distributorId = distributorId;
     }
-    
+
     if (shopId) {
       query.shopId = shopId;
     }
-    
+
     if (date) {
       const queryDate = new Date(date);
       const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
       const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
-      
+
       query.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
-    
+
     if (status) {
       query.status = status;
     }
-    
-    // Get activities with populated references
+
     const activities = await RetailerShopActivity.find(query)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
@@ -316,8 +286,7 @@ exports.getAllActivities = async (req, res, next) => {
 exports.getActivitiesByDistributor = async (req, res, next) => {
   try {
     const { distributorId } = req.params;
-    
-    // Verify distributor exists
+
     const distributor = await Distributor.findById(distributorId);
     if (!distributor) {
       return res.status(404).json({
@@ -325,16 +294,13 @@ exports.getActivitiesByDistributor = async (req, res, next) => {
         error: 'Distributor not found'
       });
     }
-    
-    // Build query
+
     const query = { distributorId };
-    
-    // For Marketing Staff, only allow viewing own activities
+
     if (req.user.role === 'Marketing Staff') {
       query.marketingStaffId = req.user.id;
     }
-    
-    // Get activities with populated references
+
     const activities = await RetailerShopActivity.find(query)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
@@ -361,8 +327,7 @@ exports.getActivitiesByDistributor = async (req, res, next) => {
 exports.getActivitiesByShop = async (req, res, next) => {
   try {
     const { shopId } = req.params;
-    
-    // Verify shop exists
+
     const shop = await Shop.findById(shopId);
     if (!shop) {
       return res.status(404).json({
@@ -370,16 +335,13 @@ exports.getActivitiesByShop = async (req, res, next) => {
         error: 'Shop not found'
       });
     }
-    
-    // Build query
+
     const query = { shopId };
-    
-    // For Marketing Staff, only allow viewing own activities
+
     if (req.user.role === 'Marketing Staff') {
       query.marketingStaffId = req.user.id;
     }
-    
-    // Get activities with populated references
+
     const activities = await RetailerShopActivity.find(query)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
@@ -406,34 +368,31 @@ exports.getActivitiesByShop = async (req, res, next) => {
 exports.getAlternateProviders = async (req, res, next) => {
   try {
     const { distributorId, dateFrom, dateTo, brandName } = req.query;
-    
-    // Build base query to find activities with alternate providers
+
     let matchQuery = {
       'alternateProviders': { $exists: true, $ne: [] }
     };
-    
-    // Add filters if provided
+
     if (distributorId) {
       matchQuery.distributorId = mongoose.Types.ObjectId(distributorId);
     }
-    
+
     if (dateFrom || dateTo) {
       matchQuery.createdAt = {};
-      
+
       if (dateFrom) {
         const fromDate = new Date(dateFrom);
         fromDate.setHours(0, 0, 0, 0);
         matchQuery.createdAt.$gte = fromDate;
       }
-      
+
       if (dateTo) {
         const toDate = new Date(dateTo);
         toDate.setHours(23, 59, 59, 999);
         matchQuery.createdAt.$lte = toDate;
       }
     }
-    
-    // Build aggregate pipeline
+
     const pipeline = [
       { $match: matchQuery },
       { $unwind: '$alternateProviders' },
@@ -486,8 +445,7 @@ exports.getAlternateProviders = async (req, res, next) => {
         }
       }
     ];
-    
-    // Filter by brand name if provided
+
     if (brandName) {
       pipeline.splice(1, 0, {
         $match: {
@@ -495,9 +453,9 @@ exports.getAlternateProviders = async (req, res, next) => {
         }
       });
     }
-    
+
     const results = await RetailerShopActivity.aggregate(pipeline);
-    
+
     res.status(200).json({
       success: true,
       count: results.length,
@@ -518,51 +476,46 @@ exports.addAlternateProviderComment = async (req, res, next) => {
   try {
     const { activityId, providerId } = req.params;
     const { comment } = req.body;
-    
-    // Validate comment
+
     if (!comment) {
       return res.status(400).json({
         success: false,
         error: 'Comment is required'
       });
     }
-    
-    // Find activity
+
     const activity = await RetailerShopActivity.findById(activityId);
-    
+
     if (!activity) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         error: 'Activity not found'
       });
     }
-    
-    // Find the specific alternate provider
+
     const providerIndex = activity.alternateProviders.findIndex(
       p => p._id.toString() === providerId
     );
-    
+
     if (providerIndex === -1) {
       return res.status(404).json({
         success: false,
         error: 'Alternate provider not found in this activity'
       });
     }
-    
-    // Update the alternate provider with MLM comment
+
     activity.alternateProviders[providerIndex].mlmComment = comment;
     activity.alternateProviders[providerIndex].mlmId = req.user.id;
     activity.alternateProviders[providerIndex].commentDate = new Date();
-    
+
     await activity.save();
-    
-    // Get fully populated activity for response
+
     const updatedActivity = await RetailerShopActivity.findById(activityId)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
       .populate('marketingStaffId', 'name email')
       .populate('alternateProviders.mlmId', 'name');
-    
+
     res.status(200).json({
       success: true,
       data: updatedActivity
@@ -581,55 +534,37 @@ exports.addAlternateProviderComment = async (req, res, next) => {
 exports.getSalesOrderActivities = async (req, res, next) => {
   try {
     const { startDate, endDate, distributorId, staffId } = req.query;
-    
-    // Start with a basic query
+
+    // Build query for RetailerShopActivity
     const query = {};
-    
-    // Add distributor filter if provided
-    if (distributorId) {
-      query.distributorId = distributorId;
-    }
+    if (distributorId) query.distributorId = distributorId;
+    if (staffId) query.marketingStaffId = staffId;
+    if (req.user.role === 'Marketing Staff') query.marketingStaffId = req.user.id;
 
-    // For Marketing Staff, only show their own activities
-    if (req.user.role === 'Marketing Staff') {
-      query.marketingStaffId = req.user.id;
-    }
-
-    // Log query for debugging
-    console.log('Query:', JSON.stringify(query));
-    console.log('User role:', req.user.role);
-    console.log('User ID:', req.user.id);
-
-    // Get all activities first
-    const activities = await RetailerShopActivity.find(query)
+    let activities = await RetailerShopActivity.find(query)
       .populate('shopId', 'name ownerName address type')
       .populate('distributorId', 'name shopName address')
       .populate('marketingStaffId', 'name email')
       .sort({ createdAt: -1 })
       .lean();
 
-    // Log initial activities found
-    console.log('Total activities found:', activities.length);
-
-    // Filter activities to only those with sales orders
-    const activitiesWithOrders = activities.filter(activity => 
-      activity.salesOrders && activity.salesOrders.length > 0
-    );
-
-    // Log filtered activities
-    console.log('Activities with orders:', activitiesWithOrders.length);
-
-    if (activitiesWithOrders.length > 0) {
-      console.log('Sample activity:', {
-        id: activitiesWithOrders[0]._id,
-        staffId: activitiesWithOrders[0].marketingStaffId?._id,
-        distributorId: activitiesWithOrders[0].distributorId?._id,
-        salesOrders: activitiesWithOrders[0].salesOrders?.length || 0
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      const start = startDate ? new Date(startDate) : new Date(-8640000000000000);
+      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
+      activities = activities.filter(activity => {
+        const activityDate = new Date(activity.createdAt);
+        return activityDate >= start && activityDate <= end;
       });
     }
 
-    // Transform matching activities
-    const detailedActivities = activitiesWithOrders.map(activity => ({
+    // Only include activities with salesOrders
+    const activitiesWithOrders = activities.filter(activity =>
+      activity.salesOrders && activity.salesOrders.length > 0
+    );
+
+    // Format the response
+    const salesOrderData = activitiesWithOrders.map(activity => ({
       activityId: activity._id,
       date: activity.createdAt,
       staffName: activity.marketingStaffId?.name || 'Unknown',
@@ -642,31 +577,28 @@ exports.getSalesOrderActivities = async (req, res, next) => {
       punchInTime: activity.punchInTime,
       punchOutTime: activity.punchOutTime,
       status: activity.status,
-      salesOrders: activity.salesOrders.map(order => ({
-        brandName: order.brandName,
-        variant: order.variant,
-        size: order.size,
-        quantity: order.quantity,
-        isDisplayedInCounter: order.isDisplayedInCounter
-      })),
+      salesOrders: activity.salesOrders,
       totalOrderItems: activity.salesOrders.length
     }));
 
-    if (detailedActivities.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: "No activities with sales orders found"
+    if (salesOrderData.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: []
       });
     }
-
-    // Return success response with data
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      count: detailedActivities.length,
-      data: detailedActivities
+      count: salesOrderData.length,
+      data: salesOrderData
     });
   } catch (error) {
+    console.error('Error in getSalesOrderActivities:', error);
     logger.error(`Error in getSalesOrderActivities controller: ${error.message}`);
-    next(error);
+    return res.status(500).json({
+      success: false,
+      error: 'An unexpected error occurred while fetching sales orders.'
+    });
   }
 };

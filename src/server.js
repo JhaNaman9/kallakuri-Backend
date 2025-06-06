@@ -84,10 +84,10 @@ const authLimiter = rateLimit({
 app.use(express.json({ limit: '10kb' })); // Body limit of 10kb
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-  origin: '*',  // Allow all origins
+  origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-panel', 'Access-Control-Allow-Origin'],
-  credentials: true,
+  allowedHeaders: '*', // Allow all headers
+  credentials: false, // Do not require credentials
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
@@ -104,6 +104,9 @@ app.use('/api/auth', authRoutes);
 
 // Mount mobile routes first to ensure they take precedence
 app.use('/api/mobile', mobileAppRoutes);
+// Fix: Import freshOrderRoutes before using
+const freshOrderRoutes = require('./routes/freshOrder');
+app.use('/api/mobile', freshOrderRoutes);
 app.use('/api/mobile/marketing-activity', mobileMarketingActivityRoutes);
 app.use('/api/mobile/shops', mobileShopRoutes);
 app.use('/api/mobile/retailer-shop-activity', mobileRetailerShopActivityRoutes);

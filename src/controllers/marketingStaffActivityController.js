@@ -404,6 +404,10 @@ exports.getMyActivities = async (req, res, next) => {
       query.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
     
+    // Only show activities where staff is currently punched in (status 'Punched In' and meetingEndTime is null)
+    query.status = 'Punched In';
+    query.meetingEndTime = null;
+    
     // Get activities with full details
     const activities = await MarketingStaffActivity.find(query)
       .populate('marketingStaffId', 'name email')

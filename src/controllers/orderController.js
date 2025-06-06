@@ -80,9 +80,11 @@ exports.getOrders = async (req, res, next) => {
     }
     
     // For Marketing Staff, only show their own orders
+    // For Admin or Mid-Level Manager, show all orders
     if (req.user.role === 'Marketing Staff') {
       query.createdBy = req.user.id;
     }
+    // No additional filter for Admin or Mid-Level Manager, they see all orders
 
     // Get orders with distributor details
     const orders = await Order.find(query)
@@ -91,6 +93,9 @@ exports.getOrders = async (req, res, next) => {
       .populate('approvedBy', 'name')
       .populate('dispatchedBy', 'name')
       .sort({ createdAt: -1 });
+
+    // If the user is not allowed to see any orders, return empty (should not occur with above logic)
+    // If you want to restrict further, add here.
 
     res.status(200).json({
       success: true,

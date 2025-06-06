@@ -145,10 +145,37 @@ exports.getTasks = async (req, res, next) => {
       query.staffRole = staffRole;
     }
     
-    // Filter by task type (internal or external)
-    if (type === 'internal') {
-      query.taskType = 'internal';
-    } else if (type === 'external') {
+    // --- CUSTOM FILTER: Exclude tasks where staff has punched out ---
+    // Only apply this filter if assignedTo is present (i.e., fetching for a staff)
+    if (assignedTo) {
+      // Find all activities where staff has punched out
+      const RetailerShopActivity = require('../models/RetailerShopActivity');
+      const punchedOutActivities = await RetailerShopActivity.find({
+        marketingStaffId: assignedTo,
+        punchOutTime: { $ne: null }
+      }).select('shopId distributorId');
+      
+      // Build list of shopIds and distributorIds where staff has punched out
+      const punchedOutShopIds = punchedOutActivities
+        .map(a => a.shopId?.toString())
+        .filter(Boolean);
+      const punchedOutDistributorIds = punchedOutActivities
+        .map(a => a.distributorId?.toString())
+        .filter(Boolean);
+      
+      // Exclude tasks for these distributors and also exclude tasks with status Completed
+      if (punchedOutDistributorIds.length > 0) {
+        query.$and = query.$and || [];
+        query.$and.push({ distributorId: { $nin: punchedOutDistributorIds } });
+        console.log('Punch out filter applied. Excluding distributorIds:', punchedOutDistributorIds);
+      }
+      // Always hide tasks with status Completed from staff (cannot be overridden by query param)
+      query.status = { $ne: 'Completed' };
+    }
+    if (creatorRole) {
+      query['createdBy.role'] = creatorRole;
+    }
+    else if (type === 'external') {
       query.$or = [
         { taskType: 'external' },
         { 'externalAssignee.isExternalUser': true }
@@ -195,10 +222,33 @@ exports.getTasks = async (req, res, next) => {
       console.log(`Task creators: ${JSON.stringify(taskCreators)}`);
     }
 
+    // Add activityStatus flag to each task for the staff (if assignedTo is present)
+    let flaggedTasks = tasks;
+    const staffId = req.query.assignedTo;
+    if (staffId) {
+      const RetailerShopActivity = require('../models/RetailerShopActivity');
+      const activities = await RetailerShopActivity.find({ marketingStaffId: staffId });
+      flaggedTasks = tasks.map(task => {
+        const distributorId = (task.distributorId && task.distributorId._id) ? task.distributorId._id.toString() : (task.distributorId ? task.distributorId.toString() : null);
+        // Try to use shopId if available on the task
+        const shopId = task.shopId ? (task.shopId._id ? task.shopId._id.toString() : task.shopId.toString()) : null;
+        let matchingActivities;
+        if (shopId) {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId && a.shopId && a.shopId.toString() === shopId);
+        } else {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId);
+        }
+        const hasPunchedOut = matchingActivities.some(a => a.punchOutTime);
+        return {
+          ...task.toObject(),
+          activityStatus: hasPunchedOut ? 'Completed' : 'Pending'
+        };
+      });
+    }
     res.status(200).json({
       success: true,
-      count: tasks.length,
-      data: tasks
+      count: flaggedTasks.length,
+      data: flaggedTasks
     });
   } catch (error) {
     logger.error(`Error in getTasks controller: ${error.message}`);
@@ -621,10 +671,33 @@ exports.getTasksByCreator = async (req, res, next) => {
       .populate('distributorId', 'name shopName contact address retailShopCount wholesaleShopCount orderCount retailShops wholesaleShops')
       .sort({ createdAt: -1 });
 
+    // Add activityStatus flag to each task for the staff (if assignedTo is present)
+    let flaggedTasks = tasks;
+    const staffId = req.query.assignedTo;
+    if (staffId) {
+      const RetailerShopActivity = require('../models/RetailerShopActivity');
+      const activities = await RetailerShopActivity.find({ marketingStaffId: staffId });
+      flaggedTasks = tasks.map(task => {
+        const distributorId = (task.distributorId && task.distributorId._id) ? task.distributorId._id.toString() : (task.distributorId ? task.distributorId.toString() : null);
+        // Try to use shopId if available on the task
+        const shopId = task.shopId ? (task.shopId._id ? task.shopId._id.toString() : task.shopId.toString()) : null;
+        let matchingActivities;
+        if (shopId) {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId && a.shopId && a.shopId.toString() === shopId);
+        } else {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId);
+        }
+        const hasPunchedOut = matchingActivities.some(a => a.punchOutTime);
+        return {
+          ...task.toObject(),
+          activityStatus: hasPunchedOut ? 'Completed' : 'Pending'
+        };
+      });
+    }
     res.status(200).json({
       success: true,
-      count: tasks.length,
-      data: tasks
+      count: flaggedTasks.length,
+      data: flaggedTasks
     });
   } catch (error) {
     logger.error(`Error in getTasksByCreator controller: ${error.message}`);
@@ -806,10 +879,33 @@ exports.getMyTasks = async (req, res, next) => {
       .populate('distributorId', 'name shopName contact address')
       .sort({ createdAt: -1 });
 
+    // Add activityStatus flag to each task for the staff (if assignedTo is present)
+    let flaggedTasks = tasks;
+    const staffId = req.query.assignedTo;
+    if (staffId) {
+      const RetailerShopActivity = require('../models/RetailerShopActivity');
+      const activities = await RetailerShopActivity.find({ marketingStaffId: staffId });
+      flaggedTasks = tasks.map(task => {
+        const distributorId = (task.distributorId && task.distributorId._id) ? task.distributorId._id.toString() : (task.distributorId ? task.distributorId.toString() : null);
+        // Try to use shopId if available on the task
+        const shopId = task.shopId ? (task.shopId._id ? task.shopId._id.toString() : task.shopId.toString()) : null;
+        let matchingActivities;
+        if (shopId) {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId && a.shopId && a.shopId.toString() === shopId);
+        } else {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId);
+        }
+        const hasPunchedOut = matchingActivities.some(a => a.punchOutTime);
+        return {
+          ...task.toObject(),
+          activityStatus: hasPunchedOut ? 'Completed' : 'Pending'
+        };
+      });
+    }
     res.status(200).json({
       success: true,
-      count: tasks.length,
-      data: tasks
+      count: flaggedTasks.length,
+      data: flaggedTasks
     });
   } catch (error) {
     logger.error(`Error in getMyTasks controller: ${error.message}`);
@@ -839,10 +935,33 @@ exports.getTasksCreatedByMe = async (req, res, next) => {
       .populate('distributorId', 'name shopName contact address')
       .sort({ createdAt: -1 });
 
+    // Add activityStatus flag to each task for the staff (if assignedTo is present)
+    let flaggedTasks = tasks;
+    const staffId = req.query.assignedTo;
+    if (staffId) {
+      const RetailerShopActivity = require('../models/RetailerShopActivity');
+      const activities = await RetailerShopActivity.find({ marketingStaffId: staffId });
+      flaggedTasks = tasks.map(task => {
+        const distributorId = (task.distributorId && task.distributorId._id) ? task.distributorId._id.toString() : (task.distributorId ? task.distributorId.toString() : null);
+        // Try to use shopId if available on the task
+        const shopId = task.shopId ? (task.shopId._id ? task.shopId._id.toString() : task.shopId.toString()) : null;
+        let matchingActivities;
+        if (shopId) {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId && a.shopId && a.shopId.toString() === shopId);
+        } else {
+          matchingActivities = activities.filter(a => a.distributorId && a.distributorId.toString() === distributorId);
+        }
+        const hasPunchedOut = matchingActivities.some(a => a.punchOutTime);
+        return {
+          ...task.toObject(),
+          activityStatus: hasPunchedOut ? 'Completed' : 'Pending'
+        };
+      });
+    }
     res.status(200).json({
       success: true,
-      count: tasks.length,
-      data: tasks
+      count: flaggedTasks.length,
+      data: flaggedTasks
     });
   } catch (error) {
     logger.error(`Error in getTasksCreatedByMe controller: ${error.message}`);

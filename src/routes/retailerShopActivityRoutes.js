@@ -331,8 +331,8 @@ mobileRouter.post(
   '/',
   restrictTo('Marketing Staff'),
   [
-    check('shopId', 'Shop ID is required').not().isEmpty(),
-    check('distributorId', 'Distributor ID is required').not().isEmpty()
+    check('shopId', 'Shop ID is required').isMongoId(),
+    check('distributorId', 'Distributor ID is required').isMongoId()
   ],
   retailerShopActivityController.createOrUpdateActivity
 );
@@ -396,15 +396,6 @@ mobileRouter.get(
  *         description: Activity details
  *       401:
  *         description: Not authenticated
- *       403:
- *         description: Not authorized
- *       404:
- *         description: Activity not found
- */
-mobileRouter.get('/:id', retailerShopActivityController.getActivity);
-
-/**
- * @swagger
  * /api/mobile/retailer-shop-activity/sales-orders:
  *   get:
  *     summary: Get all sales order activities with details
@@ -525,9 +516,118 @@ mobileRouter.get('/:id', retailerShopActivityController.getActivity);
  *       403:
  *         description: Not authorized - Requires proper role access
  */
-mobileRouter.get('/sales-orders', retailerShopActivityController.getSalesOrderActivities);
+mobileRouter.get(
+  '/sales-orders',
+  [
+    query('startDate').optional().isDate().withMessage('startDate must be a valid date (YYYY-MM-DD)'),
+    query('endDate').optional().isDate().withMessage('endDate must be a valid date (YYYY-MM-DD)'),
+    query('distributorId').optional().isMongoId().withMessage('distributorId must be a valid MongoDB ObjectId'),
+    query('staffId').optional().isMongoId().withMessage('staffId must be a valid MongoDB ObjectId')
+  ],
+  retailerShopActivityController.getSalesOrderActivities
+);
 
 // Export both routers
+/**
+ * @swagger
+ * /api/mobile/retailer-shop-activity/distributor-shops-sales-orders:
+ *   get:
+ *     summary: Get all shops for a distributor with their sales orders
+ *     description: >
+ *       Returns all shops for a given distributor, each with their sales orders (from RetailerShopActivity). Optional date filtering.
+ *     tags: [Mobile App]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: distributorId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Distributor ID to filter shops and sales orders
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Filter activities from this date (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Filter activities up to this date (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved shops and their sales orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 2
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       shopId:
+ *                         type: string
+ *                         example: "684168ff7e6037962030cf98"
+ *                       shopName:
+ *                         type: string
+ *                         example: "XYZ Shop"
+ *                       shopOwner:
+ *                         type: string
+ *                         example: "Shop Owner Name"
+ *                       shopAddress:
+ *                         type: string
+ *                         example: "123 Main St, City"
+ *                       shopType:
+ *                         type: string
+ *                         example: "Retailer"
+ *                       salesOrders:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             brandName:
+ *                               type: string
+ *                               example: "Brand X"
+ *                             variant:
+ *                               type: string
+ *                               example: "Regular"
+ *                             size:
+ *                               type: string
+ *                               example: "100g"
+ *                             quantity:
+ *                               type: number
+ *                               example: 50
+ *                             isDisplayedInCounter:
+ *                               type: boolean
+ *                               example: true
+ *       400:
+ *         description: distributorId is required
+ *       500:
+ *         description: Server error
+ */
+// New route for distributor shops sales orders (clean logic)
+const distributorShopsSalesOrdersController = require('../controllers/distributorShopsSalesOrdersController');
+
+mobileRouter.get('/distributor-shops-sales-orders', distributorShopsSalesOrdersController.getDistributorShopsSalesOrders);
+
+// New route for distributor sales orders
+const distributorSalesOrderController = require('../controllers/distributorSalesOrderController');
+
+mobileRouter.get('/distributor-sales-orders', distributorSalesOrderController.getDistributorSalesOrders);
+
 module.exports = {
   apiRouter: router,
   mobileRouter: mobileRouter
